@@ -8,8 +8,9 @@
 //   # Anthropic direct (default) - leave ANTHROPIC_BASE_URL unset
 //   ANTHROPIC_API_KEY=sk-ant-...
 //
-//   # MiniMax
-//   ANTHROPIC_BASE_URL=https://api.minimax.io/anthropic/v1
+//   # MiniMax (root URL only - the SDK appends /v1/messages, so a trailing /v1
+//   # here would produce a duplicated .../anthropic/v1/v1/messages)
+//   ANTHROPIC_BASE_URL=https://api.minimax.io/anthropic
 //   ANTHROPIC_API_KEY=<minimax-key>
 //
 //   # Z.ai
