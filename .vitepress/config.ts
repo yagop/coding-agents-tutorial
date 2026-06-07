@@ -39,7 +39,17 @@ export default {
       { text: 'Outline', link: OUTLINE },
     ],
     // Chapters are appended here as they land.
-    sidebar: [{ text: 'Chapters', items: [] }],
+    sidebar: [
+      {
+        text: 'Chapters',
+        items: [
+          {
+            text: '1. The Claude SDK and Your First API Request',
+            link: '/chapters/01-sdk-first-request',
+          },
+        ],
+      },
+    ],
     search: { provider: 'local' },
     socialLinks: [{ icon: 'github', link: GITHUB }],
     editLink: {
