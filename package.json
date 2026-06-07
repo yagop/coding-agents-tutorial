@@ -8,5 +8,12 @@
     "docs:dev": "bun x vitepress@2.0.0-alpha.17 dev",
     "docs:build": "bun x vitepress@2.0.0-alpha.17 build",
     "docs:preview": "bun x vitepress@2.0.0-alpha.17 preview"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.102.0"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.0",
+    "typescript": "^5.9.0"
   }
 }
