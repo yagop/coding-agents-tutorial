@@ -37,12 +37,14 @@ console.log('stop_sequence:', message.stop_sequence);
 console.log('input_tokens:', message.usage.input_tokens);
 console.log('output_tokens:', message.usage.output_tokens);
 
-// 4) content is Array<ContentBlock>. Each block has a `type` that determines its
-//    shape; narrow on block.type === 'text' before reading block.text.
+// 4) content is Array<ContentBlock>, so a single response can hold more than one
+//    block. The type guard below does double duty: filter() uses it to keep only
+//    text blocks at runtime, and the `block is Anthropic.TextBlock` predicate
+//    narrows the element type so block.text is available and typed as a string.
+//    join() then stitches the text blocks back into one string.
 console.log(`content: ${message.content.length} block(s)`);
-for (const block of message.content) {
-  console.log('block type:', block.type);
-  if (block.type === 'text') {
-    console.log('block text:', block.text);
-  }
-}
+const text = message.content
+  .filter((block): block is Anthropic.TextBlock => block.type === 'text')
+  .map((block) => block.text)
+  .join('\n');
+console.log('text:', text);
