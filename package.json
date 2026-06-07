@@ -1,0 +1,12 @@
+{
+  "name": "coding-agents-tutorial",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Build Your Own Coding Agent with the Anthropic SDK (TypeScript + Bun)",
+  "scripts": {
+    "docs:dev": "bun x vitepress@2.0.0-alpha.17 dev",
+    "docs:build": "bun x vitepress@2.0.0-alpha.17 build",
+    "docs:preview": "bun x vitepress@2.0.0-alpha.17 preview"
+  }
+}

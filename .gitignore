@@ -1,0 +1,15 @@
+# Dependencies
+node_modules/
+
+# Local secrets - never commit API keys or bot tokens
+.env
+.env.*
+!.env.example
+
+# VitePress build output and cache
+.vitepress/cache/
+.vitepress/dist/
+
+# Editor / OS
+.DS_Store
+*.local
