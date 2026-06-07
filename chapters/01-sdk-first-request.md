@@ -2,7 +2,7 @@
 
 This chapter takes you from an empty directory to a working `client.messages.create` call running on Bun. Along the way you will learn the shape of the Anthropic Messages API: the single `POST /v1/messages` endpoint that every later chapter builds on. Once you understand the request body (`model`, `max_tokens`, `messages`, optional `system`) and the response (`content` blocks, `stop_reason`, `usage`), every streaming and tool-calling pattern in the rest of the tutorial is just a variation on this one foundation.
 
-The examples in this chapter live under `examples/01-sdk-first-request/`. Each one is standalone and runs on its own with `bun run`. We will introduce them in order: `hello.ts`, `read-response.ts`, `curl-equivalent.sh`, `pick-a-model.ts`, and `custom-base-url.ts`.
+The examples in this chapter live under `examples/01-sdk-first-request/`. Each one is standalone and runs on its own with `bun run`. We will introduce them in order: `hello.ts`, `read-response.ts`, `curl-equivalent.sh`, `pick-a-model.ts`, and `custom-base-url.ts`. Each code listing below is imported directly from the runnable file, so what you read is exactly what you run.
 
 ## The Messages API at a glance
 
@@ -103,25 +103,9 @@ Never hardcode an API key in source. Do not paste `sk-ant-...` into a `.ts` file
 
 ## Your first request: hello.ts
 
-The first example, `examples/01-sdk-first-request/hello.ts`, is the smallest useful program: construct the client, send one message, and print the model's reply.
+The first example, `examples/01-sdk-first-request/hello.ts`, is a tiny but complete program: construct the client, send one message, print the model's reply, and peek at `stop_reason` and token usage.
 
-```ts
-// bun run examples/01-sdk-first-request/hello.ts
-import Anthropic from "@anthropic-ai/sdk";
-
-const client = new Anthropic();
-
-const message = await client.messages.create({
-  model: "claude-sonnet-4-6",
-  max_tokens: 256,
-  messages: [{ role: "user", content: "In one sentence, what is a coding agent?" }],
-});
-
-const first = message.content[0];
-if (first.type === "text") {
-  console.log(first.text);
-}
-```
+<<< @/examples/01-sdk-first-request/hello.ts
 
 Run it:
 
@@ -131,36 +115,13 @@ bun run examples/01-sdk-first-request/hello.ts
 
 A few things are worth calling out. The default import is the client class itself: `import Anthropic from "@anthropic-ai/sdk"`. The SDK's types live as members of that same name, so you can refer to `Anthropic.Message`, `Anthropic.MessageParam`, `Anthropic.ContentBlock`, and so on without a separate import. `client.messages.create(...)` returns a `Promise<Anthropic.Message>`, which is why we `await` it. The three required fields are `model`, `max_tokens`, and `messages`; everything else is optional.
 
-Notice that we do not blindly read `message.content[0].text`. The `content` array is a list of typed blocks, and only some block types have a `text` field. We narrow with `first.type === "text"` before touching `first.text`. That narrowing is not just good hygiene - in TypeScript it is what makes `first.text` type-check at all. We will lean on this pattern constantly.
+Notice that we do not blindly read `message.content[0].text`. The `content` array is a list of typed blocks, and only some block types have a `text` field. We narrow with `firstBlock?.type === "text"` before touching `firstBlock.text`. That narrowing is not just good hygiene - in TypeScript it is what makes `firstBlock.text` type-check at all. We will lean on this pattern constantly.
 
 ## Reading the full response: read-response.ts
 
-`hello.ts` reads one field. A real agent needs to understand the whole response. The next example, `examples/01-sdk-first-request/read-response.ts`, inspects the three fields that matter most: `content`, `stop_reason`, and `usage`.
+`hello.ts` reads one block and a couple of fields. A real agent needs to understand the whole response. The next example, `examples/01-sdk-first-request/read-response.ts`, inspects the response in full: the top-level fields (`id`, `model`, `role`, `stop_reason`, `stop_sequence`), the token `usage`, and every block in the `content` array.
 
-```ts
-// bun run examples/01-sdk-first-request/read-response.ts
-import Anthropic from "@anthropic-ai/sdk";
-
-const client = new Anthropic();
-
-const message = await client.messages.create({
-  model: "claude-sonnet-4-6",
-  max_tokens: 256,
-  system: "You are a concise assistant. Answer in one short paragraph.",
-  messages: [{ role: "user", content: "Explain what an API key is." }],
-});
-
-// content is an array of content blocks; collect the text ones.
-const text = message.content
-  .filter((block) => block.type === "text")
-  .map((block) => block.text)
-  .join("");
-
-console.log("text:", text);
-console.log("stop_reason:", message.stop_reason);
-console.log("input_tokens:", message.usage.input_tokens);
-console.log("output_tokens:", message.usage.output_tokens);
-```
+<<< @/examples/01-sdk-first-request/read-response.ts
 
 Run it:
 
@@ -168,11 +129,11 @@ Run it:
 bun run examples/01-sdk-first-request/read-response.ts
 ```
 
-This example also shows the optional `system` field. A system prompt sets the model's behavior or persona for the whole request; it is separate from the `messages` array and is not a "user" or "assistant" turn.
+One field worth knowing that this example does not use: the optional `system` prompt. A system prompt sets the model's behavior or persona for the whole request; it is separate from the `messages` array and is not a "user" or "assistant" turn. We put it to work in later chapters.
 
 ### content: an array of blocks
 
-`message.content` is always an array, even for a plain text reply (which arrives as a single block). Each entry is a content block with a `type` discriminator. For now you will only see `text` blocks, but the same array later carries `tool_use`, `tool_result`, and `thinking` blocks. The robust way to read text is to filter or narrow on `block.type === "text"` and read `block.text`, exactly as above. Reaching for `content[0].text` works in the simple case but breaks the moment a non-text block appears first.
+`message.content` is always an array, even for a plain text reply (which arrives as a single block). Each entry is a content block with a `type` discriminator. For now you will only see `text` blocks, but the same array later carries `tool_use`, `tool_result`, and `thinking` blocks. The robust way to read text is to narrow on `block.type === "text"` and read `block.text`, exactly as the loop above does. Reaching for `content[0].text` works in the simple case but breaks the moment a non-text block appears first.
 
 ### stop_reason: why the model stopped
 
@@ -192,26 +153,9 @@ This example also shows the optional `system` field. A system prompt sets the mo
 
 ## The same call as raw curl: curl-equivalent.sh
 
-The SDK is a convenience wrapper over a plain HTTPS request. Seeing the raw request demystifies what is happening and helps when you debug from the command line or from a language without an SDK. `examples/01-sdk-first-request/curl-equivalent.sh` is the same request as a shell script.
+The SDK is a convenience wrapper over a plain HTTPS request. Seeing the raw request demystifies what is happening and helps when you debug from the command line or from a language without an SDK. `examples/01-sdk-first-request/curl-equivalent.sh` is the same request the SDK makes, written as a shell script.
 
-```sh
-# sh examples/01-sdk-first-request/curl-equivalent.sh
-#
-# Sends the same request as hello.ts using raw curl.
-# Reads ANTHROPIC_API_KEY from the environment. No SDK, no jq required.
-
-curl https://api.anthropic.com/v1/messages \
-  --header "content-type: application/json" \
-  --header "x-api-key: $ANTHROPIC_API_KEY" \
-  --header "anthropic-version: 2023-06-01" \
-  --data '{
-    "model": "claude-sonnet-4-6",
-    "max_tokens": 256,
-    "messages": [
-      { "role": "user", "content": "In one sentence, what is a coding agent?" }
-    ]
-  }'
-```
+<<< @/examples/01-sdk-first-request/curl-equivalent.sh
 
 Run it with a shell, not Bun (it is a `.sh` script, not TypeScript):
 
@@ -225,7 +169,7 @@ Three headers carry everything the SDK was setting for you:
 - `x-api-key: $ANTHROPIC_API_KEY` - your credential. This is exactly what `new Anthropic()` does under the hood, just reading the same environment variable. (Note: the API uses an `x-api-key` header, not a bearer `Authorization` token.)
 - `anthropic-version: 2023-06-01` - the API version. This is required on every request, and `2023-06-01` is the current value. The SDK adds it automatically.
 
-The JSON body is identical to the object you passed to `client.messages.create`: `model`, `max_tokens`, and `messages`. That is the whole point - the SDK call and this curl invocation send the same request. The script reads `$ANTHROPIC_API_KEY` from the environment so you never have to paste the key inline.
+The JSON body is identical to the object you passed to `client.messages.create`: `model`, `max_tokens`, and `messages`. That is the whole point - the SDK call and this curl invocation send the same request. The script reads `$ANTHROPIC_API_KEY` from the environment so you never have to paste the key inline; it also guards against a missing key and honors `ANTHROPIC_BASE_URL`, mirroring what the SDK does.
 
 ## Picking a model: pick-a-model.ts
 
@@ -237,35 +181,7 @@ The `model` field selects which Claude model handles the request. There are thre
 
 The example `examples/01-sdk-first-request/pick-a-model.ts` sends the same prompt to all three so you can compare the output and the token usage side by side.
 
-```ts
-// bun run examples/01-sdk-first-request/pick-a-model.ts
-import Anthropic from "@anthropic-ai/sdk";
-
-const client = new Anthropic();
-
-const models: Anthropic.Model[] = [
-  "claude-opus-4-8",
-  "claude-sonnet-4-6",
-  "claude-haiku-4-5",
-];
-
-for (const model of models) {
-  const message = await client.messages.create({
-    model,
-    max_tokens: 128,
-    messages: [{ role: "user", content: "Name one benefit of streaming API responses." }],
-  });
-
-  const text = message.content
-    .filter((block) => block.type === "text")
-    .map((block) => block.text)
-    .join("");
-
-  console.log(`\n=== ${model} ===`);
-  console.log(text);
-  console.log(`tokens in/out: ${message.usage.input_tokens}/${message.usage.output_tokens}`);
-}
-```
+<<< @/examples/01-sdk-first-request/pick-a-model.ts
 
 Run it:
 
@@ -288,29 +204,7 @@ Example compatible endpoints include:
 
 The example `examples/01-sdk-first-request/custom-base-url.ts` shows the pattern.
 
-```ts
-// bun run examples/01-sdk-first-request/custom-base-url.ts
-import Anthropic from "@anthropic-ai/sdk";
-
-// new Anthropic() reads ANTHROPIC_BASE_URL (and ANTHROPIC_API_KEY) from the
-// environment. The line below is equivalent to that default when the env var
-// is set; it just makes the source explicit.
-const baseURL = process.env.ANTHROPIC_BASE_URL ?? "https://api.anthropic.com";
-
-const client = new Anthropic({ baseURL });
-
-const message = await client.messages.create({
-  // On a compatible gateway, use whatever model name that provider exposes.
-  model: process.env.MODEL ?? "claude-sonnet-4-6",
-  max_tokens: 128,
-  messages: [{ role: "user", content: "Say hello in five words." }],
-});
-
-const first = message.content[0];
-if (first.type === "text") {
-  console.log(first.text);
-}
-```
+<<< @/examples/01-sdk-first-request/custom-base-url.ts
 
 Run it (set `ANTHROPIC_BASE_URL` and a matching key in your environment first if you want to hit a gateway):
 
