@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Node 20 is deprecated on GitHub runners; run every JavaScript action on Node 24.
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+permissions:
+  contents: read
+
+# Cancel superseded runs on the same ref (e.g. new pushes to a PR).
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Type-check examples
+        run: bunx tsc --noEmit
+
+      - name: Build the docs site
+        # Fails on broken `<<< @/examples/...` snippet imports and dead links.
+        run: bun x vitepress@2.0.0-alpha.17 build
+
+      - name: Shell-script syntax check
+        run: |
+          shopt -s nullglob globstar
+          files=(examples/**/*.sh)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "No shell scripts to check."
+          else
+            for f in "${files[@]}"; do
+              echo "bash -n $f"
+              bash -n "$f"
+            done
+          fi
