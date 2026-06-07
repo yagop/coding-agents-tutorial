@@ -1,11 +1,11 @@
 ---
-name: implement-issue
-description: Implement a tutorial chapter or the README tracked by a GitHub issue in the coding-agents-tutorial repo. Fetches the issue, spawns an ultracode multi-agent Workflow that writes the chapter prose and every code sample and adversarially reviews each file, then pushes a branch and opens a PR that closes the issue. Use when asked to implement issue N, do chapter N, or fulfill a chapter task for this repo.
+name: redact-chapter
+description: Draft a tutorial chapter (or the README) from its GitHub issue in the coding-agents-tutorial repo. Reads the issue's spec, spawns an ultracode multi-agent Workflow that writes the chapter prose (with VitePress snippet imports) and every code sample and adversarially reviews each file, then pushes a branch and opens a PR that closes the issue. Use when asked to write, redact, or implement a chapter, do chapter N, or fulfill a chapter issue for this repo.
 ---
 
-# Implement a tutorial issue
+# Redact a tutorial chapter
 
-This skill turns one GitHub issue in `yagop/coding-agents-tutorial` into a branch and a pull request. Every issue maps to one deliverable: a chapter document plus its `examples/NN-slug/` code samples, or the top-level `README.md`.
+This skill turns one GitHub issue in `yagop/coding-agents-tutorial` into a branch and a pull request. Every issue maps to one deliverable: a chapter document plus its `examples/NN-slug/` code samples, or the top-level `README.md`. ("Redact" here means *redactar* - to draft/write the chapter.)
 
 The writing is done by an **ultracode multi-agent Workflow**, not by a single pass: one agent drafts the document, one agent per code sample implements it, and a second pass adversarially reviews and fixes each file before anything is committed. This keeps generated code honest (no invented SDK surface) and runnable.
 
@@ -18,14 +18,14 @@ The writing is done by an **ultracode multi-agent Workflow**, not by a single pa
 - Any repo other than `coding-agents-tutorial`.
 
 ## Inputs
-- Issue number (required). Everything else is derived from the issue body and `OUTLINE.md`.
+- Issue number (required). Everything else is derived from the issue body, which contains the full chapter spec.
 
 ## Procedure
 
-### 1. Read the issue and the outline
-Fetch the issue body and the matching `OUTLINE.md` section.
+### 1. Read the issue
+Fetch the issue body - it contains the full chapter spec (Goal, Learning objectives, Scope, Code samples, Definition of done). `OUTLINE.md` is now just a top-level index that links to the issues, so you do not need to read it.
 - gh CLI: `gh issue view <N> --repo yagop/coding-agents-tutorial --json title,body`
-- or GitHub MCP: `issue_read` (and `get_file_contents` for `OUTLINE.md`).
+- or GitHub MCP: `issue_read`.
 
 If `gh` is not installed, use the GitHub MCP tools (`issue_read`, `get_file_contents`, `create_branch`, `push_files`, `create_pull_request`, `add_issue_comment`).
 
@@ -54,7 +54,7 @@ const args = {
     // ...one entry per Code samples checkbox in the issue
   ],
   conventions: '<paste Appendix B verbatim>',
-  context: '<the full issue body PLUS the matching OUTLINE.md chapter section, verbatim>',
+  context: '<the full issue body, verbatim>',
 }
 ```
 
@@ -97,7 +97,7 @@ Pass this as the Workflow `script`, with the `args` from step 4.
 
 ```js
 export const meta = {
-  name: 'implement-tutorial-issue',
+  name: 'redact-tutorial-chapter',
   description: 'Write a tutorial doc and its code samples for one GitHub issue, review each file, return files to commit',
   phases: [
     { title: 'Doc' },
@@ -137,7 +137,7 @@ Target path: ${A.docPath}
 It must fully satisfy this spec:
 ${A.docSpec}
 
-Reference material (issue body plus outline section):
+Reference material (the issue body):
 ${CTX}
 
 Conventions you MUST follow:
@@ -158,7 +158,7 @@ const reviewed = await pipeline(
 Path: ${s.path}
 What it must demonstrate: ${s.spec}
 
-Reference material (issue plus outline):
+Reference material (the issue body):
 ${CTX}
 
 Conventions you MUST follow:
