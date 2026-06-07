@@ -169,7 +169,7 @@ Anthropic direct is the default, but the same SDK and the same code can talk to 
 
 Two compatible gateways you can point at this way:
 
-- MiniMax: `https://api.minimax.io/anthropic/v1`
+- MiniMax: `https://api.minimax.io/anthropic`
 - Z.ai: `https://api.z.ai/api/anthropic`
 
 For each, set `ANTHROPIC_BASE_URL` to the gateway URL and `ANTHROPIC_API_KEY` to that provider's key. The model IDs a gateway exposes differ from Anthropic's, so adjust the `model` field to whatever the provider offers.
