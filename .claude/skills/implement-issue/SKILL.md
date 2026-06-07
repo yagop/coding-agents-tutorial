@@ -101,6 +101,12 @@ export const meta = {
   ],
 }
 
+// The Workflow harness delivers `args` to the script as a JSON STRING, not an
+// object. Parse it before use - otherwise every `A.field` is undefined and the
+// Implement/Review pipeline silently fans out to zero samples (you get only the
+// doc back, with no error).
+const A = typeof args === 'string' ? JSON.parse(args) : (args || {})
+
 const FILE = {
   type: 'object', additionalProperties: false, required: ['path', 'content'],
   properties: { path: { type: 'string' }, content: { type: 'string' } },
@@ -116,15 +122,15 @@ const REVIEW = {
   },
 }
 
-const CONV = args.conventions
-const CTX = args.context
+const CONV = A.conventions
+const CTX = A.context
 
 phase('Doc')
 const doc = await agent(`Write the deliverable Markdown document for this tutorial issue.
-Target path: ${args.docPath}
+Target path: ${A.docPath}
 
 It must fully satisfy this spec:
-${args.docSpec}
+${A.docSpec}
 
 Reference material (issue body plus outline section):
 ${CTX}
@@ -133,10 +139,10 @@ Conventions you MUST follow:
 ${CONV}
 
 The prose must reference each code sample by filename so a reader can run them in order. Return the path and the complete file content.`,
-  { schema: FILE, label: 'doc:' + args.docPath, phase: 'Doc' })
+  { schema: FILE, label: 'doc:' + A.docPath, phase: 'Doc' })
 
 phase('Implement')
-const samples = args.samples || []
+const samples = A.samples || []
 const reviewed = await pipeline(
   samples,
   (s) => agent(`Implement this tutorial code sample as a complete, runnable file.
