@@ -1,11 +1,11 @@
 ---
-name: redact-chapter
-description: Draft a tutorial chapter (or the README) from its GitHub issue in the coding-agents-tutorial repo. Reads the issue's spec, spawns an ultracode multi-agent Workflow that writes the chapter prose (with VitePress snippet imports) and every code sample and adversarially reviews each file, then pushes a branch and opens a PR that closes the issue. Use when asked to write, redact, or implement a chapter, do chapter N, or fulfill a chapter issue for this repo.
+name: write-chapter
+description: Write a tutorial chapter (or the README) from its GitHub issue in the coding-agents-tutorial repo. Reads the issue's spec, spawns an ultracode multi-agent Workflow that writes the chapter prose (with VitePress snippet imports) and every code sample and adversarially reviews each file, then pushes a branch and opens a PR that closes the issue. Use when asked to write, draft, or implement a chapter, do chapter N, or fulfill a chapter issue for this repo.
 ---
 
-# Redact a tutorial chapter
+# Write a tutorial chapter
 
-This skill turns one GitHub issue in `yagop/coding-agents-tutorial` into a branch and a pull request. Every issue maps to one deliverable: a chapter document plus its `examples/NN-slug/` code samples, or the top-level `README.md`. ("Redact" here means *redactar* - to draft/write the chapter.)
+This skill turns one GitHub issue in `yagop/coding-agents-tutorial` into a branch and a pull request. Every issue maps to one deliverable: a chapter document plus its `examples/NN-slug/` code samples, or the top-level `README.md`.
 
 The writing is done by an **ultracode multi-agent Workflow**, not by a single pass: one agent drafts the document, one agent per code sample implements it, and a second pass adversarially reviews and fixes each file before anything is committed. This keeps generated code honest (no invented SDK surface) and runnable.
 
@@ -97,7 +97,7 @@ Pass this as the Workflow `script`, with the `args` from step 4.
 
 ```js
 export const meta = {
-  name: 'redact-tutorial-chapter',
+  name: 'write-tutorial-chapter',
   description: 'Write a tutorial doc and its code samples for one GitHub issue, review each file, return files to commit',
   phases: [
     { title: 'Doc' },
