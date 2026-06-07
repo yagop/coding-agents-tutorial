@@ -18,6 +18,6 @@ features:
     details: Every chapter ships single-file examples under examples/NN-slug/ that you run directly with `bun run` - no build step.
   - title: Real SDK surface only
     details: Samples use only the official @anthropic-ai/sdk - client.messages.create, content blocks, streaming, tools - never invented methods.
-  - title: English and Spanish
-    details: The site ships in both languages; switch with the language menu in the nav. Code examples are shared across locales, so they never drift.
+  - title: Anthropic direct or any gateway
+    details: The same code targets Anthropic direct or an Anthropic-compatible gateway (Bedrock, Vertex, or a custom ANTHROPIC_BASE_URL) - just change one env var.
 ---

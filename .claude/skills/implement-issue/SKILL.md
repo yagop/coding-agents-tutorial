@@ -62,7 +62,7 @@ For the README issue: set `docPath` to `README.md`, `samples` to `[]`, and `docS
 
 ### 5. Commit the generated files
 The Workflow returns `{ files: [{ path, content }], flagged: [...] }`. Write each file to its `path` in the local clone. Then wire the new chapter into the published site before committing:
-- Add the chapter to the English sidebar (`locales.root.themeConfig.sidebar`) in `.vitepress/config.ts`, with `link` pointing at the chapter path without its `.md` extension (for example `/chapters/05-tools`).
+- Add the chapter to `themeConfig.sidebar` in `.vitepress/config.ts`, with `link` pointing at the chapter path without its `.md` extension (for example `/chapters/05-tools`).
 - Link the chapter from the `README.md` table of contents.
 
 Commit everything in one commit on the branch with `git`:
