@@ -61,7 +61,11 @@ const args = {
 For the README issue: set `docPath` to `README.md`, `samples` to `[]`, and `docSpec` to the README issue checklist.
 
 ### 5. Commit the generated files
-The Workflow returns `{ files: [{ path, content }], flagged: [...] }`. Write each file to its `path` in the local clone, then commit them all in one commit on the branch with `git`:
+The Workflow returns `{ files: [{ path, content }], flagged: [...] }`. Write each file to its `path` in the local clone. Then wire the new chapter into the published site before committing:
+- Add the chapter to `themeConfig.sidebar` in `.vitepress/config.ts`, with `link` pointing at the chapter path without its `.md` extension (for example `/chapters/05-tools`).
+- Link the chapter from the `README.md` table of contents.
+
+Commit everything in one commit on the branch with `git`:
 - `git add <every path>` (or `git add -A`), then `git commit -m 'Implement #<N>: <title>'`, then `git push -u origin <branch>`.
 
 ### 6. Open the PR
@@ -74,6 +78,7 @@ Add a comment on the issue linking the PR (`gh issue comment <N> --body ...`, or
 
 ### 7. Verify
 - If a local clone exists: run `bun install` once, then `bun run <file>` (or `bunx tsc --noEmit`) on the new files and paste results into the PR.
+- Build the docs so the snippet imports are checked to resolve: `bun x vitepress@2.0.0-alpha.17 build` (a broken `<<< @/examples/...` path fails the build).
 - If no clone: rely on the Workflow review pass and state in the PR that a local/CI run is still pending. Never claim the code runs if it was not executed.
 
 ## Special cases (accuracy)
@@ -138,7 +143,11 @@ ${CTX}
 Conventions you MUST follow:
 ${CONV}
 
-The prose must reference each code sample by filename so a reader can run them in order. Return the path and the complete file content.`,
+Each chapter is published with VitePress. Do NOT paste a sample's full source into a fenced code block. Instead show it with a VitePress snippet import on its own line, so the rendered page always matches the runnable file:
+
+<<< @/examples/NN-slug/file.ts
+
+Reference and import every code sample in order, writing prose around each that teaches what it does and references it by filename. Use inline fenced blocks only for short illustrative fragments (a line or two), never for a whole sample file. The prose must not restate code that the import already shows, and must not contradict it (variable names, prompts, models). Return the path and the complete file content.`,
   { schema: FILE, label: 'doc:' + A.docPath, phase: 'Doc' })
 
 phase('Implement')
@@ -199,4 +208,5 @@ Scale the run to the issue: a small chapter is a handful of agents; a large one 
 - TypeScript style: prefer `type` over `interface`; never use `unknown` or index signatures; reuse SDK-exported types (`Anthropic.MessageParam`, `Anthropic.Tool`, `Anthropic.ToolUseBlock`, etc.).
 - ASCII punctuation only: `-`, `->`, `...`. No em dashes, no smart quotes.
 - Each example is standalone and runnable on its own. Begin each file with a short header comment giving the run command (for example: `// bun run examples/05-tools/define-tool.ts`).
+- Chapters are rendered by VitePress and published to GitHub Pages. In chapter prose, show a sample's full source with a VitePress snippet import (`<<< @/examples/NN-slug/file.ts`) on its own line, NOT by pasting the code into a fenced block - this keeps the rendered docs in lockstep with the runnable file. Inline fenced blocks are only for short illustrative fragments. The runnable file under `examples/` is the single source of truth; prose must not contradict it. After editing chapters, the site builds with `bun x vitepress@2.0.0-alpha.17 build`.
 - Telegram samples use raw `fetch` against the Bot API (`https://api.telegram.org/bot<token>/<method>`) and read `TELEGRAM_BOT_TOKEN` from the environment. Do not add `node-telegram-bot-api` or any third-party Telegram dependency.
