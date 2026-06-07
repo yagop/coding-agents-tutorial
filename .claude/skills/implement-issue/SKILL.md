@@ -61,8 +61,8 @@ const args = {
 For the README issue: set `docPath` to `README.md`, `samples` to `[]`, and `docSpec` to the README issue checklist.
 
 ### 5. Commit the generated files
-The Workflow returns `{ files: [{ path, content }], flagged: [...] }`. Push every file in one commit to the branch:
-- MCP `push_files({ owner: 'yagop', repo: 'coding-agents-tutorial', branch, files, message: 'Implement #<N>: <title>' })`.
+The Workflow returns `{ files: [{ path, content }], flagged: [...] }`. Write each file to its `path` in the local clone, then commit them all in one commit on the branch with `git`:
+- `git add <every path>` (or `git add -A`), then `git commit -m 'Implement #<N>: <title>'`, then `git push -u origin <branch>`.
 
 ### 6. Open the PR
 Create a pull request from the branch into `main`:
@@ -70,7 +70,7 @@ Create a pull request from the branch into `main`:
 - body: start with `Closes #<N>`, then paste the issue Definition of done as a checklist, then a **Review flags** section listing any `flagged` files the Workflow could not fully verify (empty is good).
 - MCP `create_pull_request({ owner, repo, head: branch, base: 'main', title, body })`.
 
-Optionally `add_issue_comment` on the issue linking the PR.
+Add a comment on the issue linking the PR (`gh issue comment <N> --body ...`, or MCP `add_issue_comment`). Always post this comment.
 
 ### 7. Verify
 - If a local clone exists: run `bun install` once, then `bun run <file>` (or `bunx tsc --noEmit`) on the new files and paste results into the PR.
@@ -193,4 +193,4 @@ Scale the run to the issue: a small chapter is a handful of agents; a large one 
 - TypeScript style: prefer `type` over `interface`; never use `unknown` or index signatures; reuse SDK-exported types (`Anthropic.MessageParam`, `Anthropic.Tool`, `Anthropic.ToolUseBlock`, etc.).
 - ASCII punctuation only: `-`, `->`, `...`. No em dashes, no smart quotes.
 - Each example is standalone and runnable on its own. Begin each file with a short header comment giving the run command (for example: `// bun run examples/05-tools/define-tool.ts`).
-- Telegram samples use `node-telegram-bot-api` and read `TELEGRAM_BOT_TOKEN` from the environment.
+- Telegram samples use raw `fetch` against the Bot API (`https://api.telegram.org/bot<token>/<method>`) and read `TELEGRAM_BOT_TOKEN` from the environment. Do not add `node-telegram-bot-api` or any third-party Telegram dependency.
