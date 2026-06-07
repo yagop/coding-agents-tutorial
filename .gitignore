@@ -1,0 +1,11 @@
+# Dependencies
+node_modules/
+
+# Local secrets - never commit API keys or bot tokens
+.env
+.env.*
+!.env.example
+
+# Editor / OS
+.DS_Store
+*.local
