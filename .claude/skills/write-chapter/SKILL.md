@@ -23,7 +23,7 @@ The writing is done by an **ultracode multi-agent Workflow**, not by a single pa
 ## Procedure
 
 ### 1. Read the issue
-Fetch the issue body - it contains the full chapter spec (Goal, What to cover, Going deeper, Out of scope, Code samples, Definition of done). `OUTLINE.md` is now just a top-level index that links to the issues, so you do not need to read it.
+Fetch the issue body - it contains the full chapter spec (Goal, What to cover, Going deeper, Out of scope, Code samples, Definition of done). `OUTLINE.md` is now just a top-level index that links to the issues.
 - gh CLI: `gh issue view <N> --repo yagop/coding-agents-tutorial --json title,body`
 - or GitHub MCP: `issue_read`.
 
