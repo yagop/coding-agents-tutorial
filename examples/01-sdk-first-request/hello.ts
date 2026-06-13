@@ -2,11 +2,11 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 
-// new Anthropic() reads ANTHROPIC_API_KEY from the environment - never hardcode it.
+// new Anthropic() reads your credentials and ANTHROPIC_BASE_URL from the environment - never hardcode them.
 const client = new Anthropic();
 
 const message = await client.messages.create({
-  model: 'claude-opus-4-8',
+  model: process.env.ANTHROPIC_DEFAULT_OPUS_MODEL ?? 'claude-opus-4-8',
   max_tokens: 1024,
   messages: [
     {

@@ -2,8 +2,8 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 
-// Any OpenAI-compatible gateway (OpenRouter, MiniMax, Z.ai, ...) works with this
-// exact code via ANTHROPIC_BASE_URL; unset, we fall back to Anthropic direct.
+// Any Anthropic-compatible gateway (MiniMax, Z.ai, ...) works with this exact code
+// via ANTHROPIC_BASE_URL; unset, we fall back to Anthropic direct.
 const client = new Anthropic({
   baseURL: process.env.ANTHROPIC_BASE_URL ?? 'https://api.anthropic.com',
 });
@@ -11,7 +11,7 @@ const client = new Anthropic({
 console.log('calling:', client.baseURL);
 
 const message = await client.messages.create({
-  model: process.env.MODEL ?? 'claude-sonnet-4-6',
+  model: process.env.ANTHROPIC_DEFAULT_SONNET_MODEL ?? 'claude-sonnet-4-6',
   max_tokens: 128,
   messages: [{ role: 'user', content: 'In one sentence, what is a coding agent?' }],
 });

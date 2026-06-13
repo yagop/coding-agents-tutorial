@@ -2,12 +2,12 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 
-// new Anthropic() reads ANTHROPIC_API_KEY from the environment - never hardcode it.
+// new Anthropic() reads your credentials and ANTHROPIC_BASE_URL from the environment - never hardcode them.
 const client = new Anthropic();
 
 // Typing the result as Anthropic.Message surfaces the full response shape.
 const message: Anthropic.Message = await client.messages.create({
-  model: 'claude-sonnet-4-6',
+  model: process.env.ANTHROPIC_DEFAULT_SONNET_MODEL ?? 'claude-sonnet-4-6',
   max_tokens: 256,
   system: 'You are a concise assistant. Answer in one short paragraph.',
   messages: [{ role: 'user', content: 'In one sentence, what is a coding agent?' }],

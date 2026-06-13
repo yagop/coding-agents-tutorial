@@ -1,20 +1,31 @@
 # The Claude SDK and Your First API Request
 
-Welcome - this is where your coding agent begins. By the end of this chapter you will go from an empty directory to a working `client.messages.create` call on Bun, and you will understand the Anthropic Messages API: one stateless endpoint, `POST /v1/messages`, whose JSON body takes `model`, `max_tokens`, `messages`, and an optional `system` field. The response that comes back - `content` blocks, `stop_reason`, `usage` - is the shape every later chapter builds on. Streaming, tool use, and prompt caching all arrive later; here you nail the foundation they rest on.
+Welcome - this is where your coding agent begins. You go from an empty directory to a working `client.messages.create` call on Bun and get to know the Anthropic Messages API: one stateless endpoint, `POST /v1/messages`, whose JSON body takes `model`, `max_tokens`, `messages`, and an optional `system` field. The response that comes back - `content` blocks, `stop_reason`, `usage` - is the shape every later chapter builds on. Streaming, tool use, and prompt caching all arrive later; here you nail the foundation they rest on.
 
-Prerequisites: Bun installed and `ANTHROPIC_API_KEY` set in your environment (plus `ANTHROPIC_BASE_URL` if you use a compatible provider). No earlier chapters required.
+Prerequisites: Bun installed and your API credentials in a `.env` file at the project root (the next section explains which variables). No earlier chapters required.
 
 ## Set up and make your first request
 
 You start by scaffolding a project: `bun init` creates a `package.json` and `tsconfig.json`, and `bun add @anthropic-ai/sdk` installs the SDK. Bun runs TypeScript directly, so there is no build or transpile step - you launch a `.ts` file with `bun run`. This repo already ships the `package.json`, `tsconfig.json`, and installed SDK, so if you are following along inside it you can skip `bun init` / `bun add` and just run the file.
 
-Authentication comes from the environment, never from source. Put your key in a `.env` file at the project root:
+Authentication comes from the environment, never from source. Put your credentials in a `.env` file at the project root - Bun auto-loads it when it runs a script, so there is no `dotenv` to import and your variables are set by the time your code runs:
 
 ```
+# Anthropic direct
 ANTHROPIC_API_KEY=sk-ant-...
+
+# ...or point at a compatible provider instead (see the last section)
+ANTHROPIC_BASE_URL=https://api.z.ai/api/anthropic
+ANTHROPIC_AUTH_TOKEN=your-provider-token
 ```
 
-Bun auto-loads `.env` when it runs a script - there is no `dotenv` to import and no loader to wire up, so `ANTHROPIC_API_KEY` is already set by the time your code runs. Constructing the client with `new Anthropic()` reads that variable for you; if you would rather pass the key explicitly (say, from a secrets manager) use `new Anthropic({ apiKey: myKey })`. Both forms produce the same client, and this tutorial uses the zero-argument form so the key stays out of your code. At the HTTP level that key becomes the `x-api-key` header you will see shortly.
+Three variables drive every example here, and `new Anthropic()` reads all of them for you:
+
+- `ANTHROPIC_API_KEY` - your Anthropic key, sent as the `x-api-key` header. This alone is enough for Anthropic direct.
+- `ANTHROPIC_AUTH_TOKEN` - an alternative credential sent as `Authorization: Bearer ...`. Some compatible providers (Z.ai among them) authenticate this way instead of `x-api-key`.
+- `ANTHROPIC_BASE_URL` - which endpoint to call. Leave it unset for Anthropic direct (`https://api.anthropic.com`), or set it to repoint the same code at another provider.
+
+To pass a key explicitly instead (say, from a secrets manager) use `new Anthropic({ apiKey: myKey })`; this tutorial uses the zero-argument form so secrets stay out of your code.
 
 Here is the smallest useful program - construct a client, send one user message, print the reply:
 
@@ -40,7 +51,7 @@ The SDK is a convenience layer over plain HTTP, and it is worth seeing exactly w
 
 <<< @/examples/01-sdk-first-request/curl-equivalent.sh
 
-The JSON body is the same object you pass to `client.messages.create`; the three required headers (`content-type: application/json`, `x-api-key`, `anthropic-version: 2023-06-01`) are what the SDK fills in for you. Note one Bun caveat in the header comment: a shell script does not get `.env` auto-loaded the way a `.ts` file does, so export the key first.
+The JSON body is the same object you pass to `client.messages.create`. Three headers are required: `content-type: application/json`, `anthropic-version: 2023-06-01`, and your auth - `x-api-key` for Anthropic direct or `Authorization: Bearer ...` for a token-based provider - all of which the SDK fills in for you. Note one Bun caveat in the header comment: a shell script does not get `.env` auto-loaded the way a `.ts` file does, so export your variables first.
 
 ## Pick a model and understand max_tokens
 
@@ -54,7 +65,7 @@ This is the place to nail down `max_tokens`: **it is an upper bound on the respo
 
 ## Point at another provider
 
-The same SDK and the same code can talk to any Anthropic-compatible endpoint - the mechanism is `baseURL`, the address the client sends to. Just as `new Anthropic()` reads `ANTHROPIC_API_KEY`, it also reads `ANTHROPIC_BASE_URL`, so setting that one variable (plus the provider's key) repoints your existing code with no edits. You can also pass it explicitly with `new Anthropic({ baseURL })`. Compatible gateways include MiniMax (`https://api.minimax.io/anthropic/v1`) and Z.ai (`https://api.z.ai/api/anthropic`); the model IDs each exposes differ, so adjust the `model` field to match.
+The same SDK and the same code can talk to any Anthropic-compatible endpoint - the mechanism is `baseURL`, the address the client sends to. Just as `new Anthropic()` reads `ANTHROPIC_API_KEY`, it also reads `ANTHROPIC_AUTH_TOKEN` and `ANTHROPIC_BASE_URL`, so setting those variables repoints your existing code with no edits. You can also pass the URL explicitly with `new Anthropic({ baseURL })`. Compatible gateways include MiniMax (`https://api.minimax.io/anthropic`) and Z.ai (`https://api.z.ai/api/anthropic`); the model IDs each exposes differ, so set `ANTHROPIC_DEFAULT_SONNET_MODEL` (and the opus/haiku variants) to the provider's models - every example here reads those with a Claude fallback, so the code itself never changes.
 
 The example makes the override explicit, falling back to Anthropic direct when the env var is unset so it runs either way:
 

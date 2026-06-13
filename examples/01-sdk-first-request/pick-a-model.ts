@@ -4,7 +4,11 @@ import Anthropic from '@anthropic-ai/sdk';
 
 const client = new Anthropic();
 
-const models: Anthropic.Model[] = ['claude-opus-4-8', 'claude-sonnet-4-6', 'claude-haiku-4-5'];
+const models: Anthropic.Model[] = [
+  process.env.ANTHROPIC_DEFAULT_OPUS_MODEL ?? 'claude-opus-4-8',
+  process.env.ANTHROPIC_DEFAULT_SONNET_MODEL ?? 'claude-sonnet-4-6',
+  process.env.ANTHROPIC_DEFAULT_HAIKU_MODEL ?? 'claude-haiku-4-5',
+];
 const prompt = 'In one sentence, what is a coding agent?';
 
 async function ask(model: Anthropic.Model, max_tokens: number) {
