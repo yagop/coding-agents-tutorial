@@ -8,8 +8,14 @@ const base = `https://api.telegram.org/bot${token}`;
 const client = new Anthropic();
 type Update = { update_id: number; message?: { chat: { id: number }; text?: string } };
 type Entry = [number, Anthropic.MessageParam[]];
-const tg = async <T>(method: string, body: object): Promise<{ result?: T }> =>
-  (await fetch(`${base}/${method}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })).json() as Promise<{ result?: T }>;
+async function tg<T>(method: string, body: object): Promise<{ result?: T }> {
+  const res = await fetch(`${base}/${method}`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  return res.json() as Promise<{ result?: T }>;
+}
 const file = `${import.meta.dir}/sessions.json`;
 const saved: Entry[] = await Bun.file(file).exists() ? await Bun.file(file).json() : [];
 const sessions = new Map<number, Anthropic.MessageParam[]>(saved);
