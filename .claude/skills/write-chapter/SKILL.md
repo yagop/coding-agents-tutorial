@@ -61,7 +61,7 @@ const args = {
 For the README issue: set `docPath` to `README.md`, `samples` to `[]`, and `docSpec` to the README issue checklist.
 
 ### 5. Commit the generated files
-The Workflow returns `{ files: [{ path, content }], flagged: [...] }`. Write each file to its `path` in the local clone. Then wire the new chapter into the published site before committing:
+The Workflow returns `{ files: [{ path, content }], flagged: [...] }`. Write each file to its `path` in the local clone. The deliverable is exactly that doc plus the listed sample files - if any stray files exist under `examples/NN-slug/` that are NOT in the returned `files` list (an agent may have written extras), delete them before committing, and confirm the chapter imports only the listed samples. Then wire the new chapter into the published site before committing:
 - Add the chapter to `themeConfig.sidebar` in `.vitepress/config.ts`, with `link` pointing at the chapter path without its `.md` extension (for example `/chapters/05-tools`).
 - Link the chapter from the `README.md` table of contents.
 
@@ -131,6 +131,12 @@ const REVIEW = {
 const CONV = A.conventions
 const CTX = A.context
 
+// Exact, ordered list of sample import lines. Pins the doc agent to the real
+// sample paths so it cannot invent, rename, or omit example filenames.
+const SAMPLE_IMPORTS = (A.samples || [])
+  .map((s) => `- ${s.path} (shows: ${s.spec})\n  import line, VERBATIM on its own line: <<< @/${s.path}`)
+  .join('\n')
+
 phase('Doc')
 const doc = await agent(`Write the deliverable Markdown document for this tutorial issue.
 Target path: ${A.docPath}
@@ -144,11 +150,14 @@ ${CTX}
 Conventions you MUST follow:
 ${CONV}
 
-Each chapter is published with VitePress. Do NOT paste a sample's full source into a fenced code block. Instead show it with a VitePress snippet import on its own line, so the rendered page always matches the runnable file:
+Each chapter is published with VitePress. Do NOT paste a sample's full source into a fenced code block. Instead show it with a VitePress snippet import on its own line, so the rendered page always matches the runnable file.
 
-<<< @/examples/NN-slug/file.ts
+You MUST import EXACTLY these sample files, in this order - and NO others. Use each import line VERBATIM, each on its own line. Do not invent, rename, reorder, or omit any sample filename, and do not reference any example path that is not in this list:
+${SAMPLE_IMPORTS}
 
-Reference and import every code sample in order, grouping them under AT MOST 4 main-line H2 sections - do NOT give each sample its own H2. Around each import use the snippet sandwich: at most one orienting sentence before, at most two "what to notice" sentences after. Use inline fenced blocks only for short illustrative fragments (a line or two), never for a whole sample file, and never paste package.json/tsconfig JSON. The prose must not restate code that the import already shows (one-home rule), and must not contradict it (variable names, prompts, models). Address the reader as "you"; the intro and at least one section must open with a warm, second-person sentence. Keep the whole chapter within 150 lines. You MAY use light visual aids - VitePress callouts (`:::`), a small Markdown table, and at most one small ASCII diagram - plus a few (not many) emoji, all used sparingly per the conventions. Return the path and the complete file content.`,
+You author ONLY the chapter document and return it via the result. You do NOT create, write, or edit any file under examples/ (those files are authored separately) - the only \`<<<\` import lines in the document must be the exact ones listed above.
+
+Group the imports under AT MOST 4 main-line H2 sections - do NOT give each sample its own H2. Around each import use the snippet sandwich: at most one orienting sentence before, at most two "what to notice" sentences after. Use inline fenced blocks only for short illustrative fragments (a line or two), never for a whole sample file, and never paste package.json/tsconfig JSON. The prose must not restate code that the import already shows (one-home rule), and must not contradict it (variable names, prompts, models). Address the reader as "you"; the intro and at least one section must open with a warm, second-person sentence. Keep the whole chapter within 150 lines. You MAY use light visual aids - VitePress callouts (`:::`), a small Markdown table, and at most one small ASCII diagram - plus a few (not many) emoji, all used sparingly per the conventions. Return the path and the complete file content.`,
   { schema: FILE, label: 'doc:' + A.docPath, phase: 'Doc' })
 
 phase('Implement')
