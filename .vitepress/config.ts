@@ -11,7 +11,6 @@
 //   <<< @/examples/01-sdk-first-request/hello.ts
 
 const GITHUB = 'https://github.com/yagop/coding-agents-tutorial'
-const OUTLINE = GITHUB + '/blob/main/OUTLINE.md'
 
 export default {
   title: 'Build Your Own Coding Agent',
@@ -24,6 +23,13 @@ export default {
   cleanUrls: true,
   lastUpdated: true,
 
+  // The first chapter IS the homepage: chapters/01 is rendered at the site root
+  // ("/"). chapters/NN-slug.md stays the single source of truth; add later
+  // chapters as normal /chapters/... routes.
+  rewrites: {
+    'chapters/01-sdk-first-request.md': 'index.md',
+  },
+
   // Markdown files that are not tutorial pages.
   srcExclude: [
     'README.md',
@@ -35,8 +41,7 @@ export default {
 
   themeConfig: {
     nav: [
-      { text: 'Home', link: '/' },
-      { text: 'Outline', link: OUTLINE },
+      { text: 'Chapters', link: '/' },
     ],
     // Chapters are appended here as they land.
     sidebar: [
@@ -45,7 +50,7 @@ export default {
         items: [
           {
             text: '1. The Claude SDK and Your First API Request',
-            link: '/chapters/01-sdk-first-request',
+            link: '/',
           },
         ],
       },
