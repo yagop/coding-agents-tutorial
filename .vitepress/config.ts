@@ -52,6 +52,10 @@ export default {
             text: '1. The Claude SDK and Your First API Request',
             link: '/',
           },
+          {
+            text: '2. Streaming Responses and Message Types',
+            link: '/chapters/02-streaming',
+          },
         ],
       },
     ],
