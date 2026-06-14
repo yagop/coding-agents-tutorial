@@ -31,6 +31,18 @@ async function tg<T>(method: string, body: object): Promise<{ result?: T }> {
   return response.json() as Promise<{ result?: T }>;
 }
 
+// Long-poll getUpdates forever, yielding one update at a time.
+async function* pollUpdates(): AsyncGenerator<Update> {
+  let offset = 0;
+  while (true) {
+    const { result = [] } = await tg<Update[]>('getUpdates', { offset, timeout: 30 });
+    for (const update of result) {
+      offset = update.update_id + 1;
+      yield update;
+    }
+  }
+}
+
 const file = `${import.meta.dir}/sessions.json`;
 const sessions = new Map<number, Anthropic.MessageParam[]>();
 if (await Bun.file(file).exists()) {
@@ -45,32 +57,27 @@ async function persist(): Promise<void> {
   await Bun.write(file, JSON.stringify(entries, null, 2));
 }
 
-let offset = 0;
-for (;;) {
-  const { result = [] } = await tg<Update[]>('getUpdates', { offset, timeout: 30 });
-  for (const update of result) {
-    offset = update.update_id + 1;
-    const chatId = update.message?.chat.id;
-    const prompt = update.message?.text?.trim();
-    if (chatId === undefined || !prompt) {
-      continue;
-    }
-
-    const history = sessions.get(chatId) ?? [];
-    history.push({ role: 'user', content: prompt });
-
-    const reply = await client.messages.create({
-      model,
-      max_tokens: 1024,
-      messages: history,
-    });
-    history.push({ role: 'assistant', content: reply.content });
-
-    sessions.set(chatId, history);
-    await persist();
-
-    const first = reply.content[0];
-    const answer = first?.type === 'text' ? first.text : '...';
-    await tg('sendMessage', { chat_id: chatId, text: answer });
+for await (const update of pollUpdates()) {
+  const chatId = update.message?.chat.id;
+  const prompt = update.message?.text?.trim();
+  if (chatId === undefined || !prompt) {
+    continue;
   }
+
+  const history = sessions.get(chatId) ?? [];
+  history.push({ role: 'user', content: prompt });
+
+  const reply = await client.messages.create({
+    model,
+    max_tokens: 1024,
+    messages: history,
+  });
+  history.push({ role: 'assistant', content: reply.content });
+
+  sessions.set(chatId, history);
+  await persist();
+
+  const first = reply.content[0];
+  const answer = first?.type === 'text' ? first.text : '...';
+  await tg('sendMessage', { chat_id: chatId, text: answer });
 }

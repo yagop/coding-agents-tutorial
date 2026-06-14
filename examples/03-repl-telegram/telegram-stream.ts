@@ -27,7 +27,6 @@ type TgResult<T> = {
   parameters?: { retry_after?: number };
 };
 
-// POST a JSON body to one Bot API method and return the parsed response.
 async function tg<T>(method: string, body: object): Promise<TgResult<T>> {
   const response = await fetch(`${base}/${method}`, {
     method: 'POST',
@@ -37,7 +36,17 @@ async function tg<T>(method: string, body: object): Promise<TgResult<T>> {
   return response.json() as Promise<TgResult<T>>;
 }
 
-// Edit a message in place, retrying once Telegram lifts a 429 flood limit.
+async function* pollUpdates(): AsyncGenerator<Update> {
+  let offset = 0;
+  while (true) {
+    const { result = [] } = await tg<Update[]>('getUpdates', { offset, timeout: 30 });
+    for (const update of result) {
+      offset = update.update_id + 1;
+      yield update;
+    }
+  }
+}
+
 async function edit(chat_id: number, message_id: number, text: string): Promise<void> {
   const result = await tg('editMessageText', { chat_id, message_id, text });
   if (result.ok || result.description?.includes('not modified') || result.error_code !== 429) {
@@ -48,42 +57,37 @@ async function edit(chat_id: number, message_id: number, text: string): Promise<
   await edit(chat_id, message_id, text);
 }
 
-let offset = 0;
-for (;;) {
-  const { result = [] } = await tg<Update[]>('getUpdates', { offset, timeout: 30 });
-  for (const update of result) {
-    offset = update.update_id + 1;
-    const chat_id = update.message?.chat.id;
-    const prompt = update.message?.text?.trim();
-    if (chat_id === undefined || !prompt) {
-      continue;
-    }
-
-    const placeholder = await tg<{ message_id: number }>('sendMessage', {
-      chat_id,
-      text: '...',
-    });
-    const message_id = placeholder.result!.message_id;
-
-    const stream = client.messages.stream({
-      model,
-      max_tokens: 1024,
-      messages: [{ role: 'user', content: prompt }],
-    });
-
-    let text = '';
-    let lastEdit = 0;
-    // Editing on every token trips the flood limit; batch deltas and edit at most ~1/sec.
-    stream.on('text', (delta) => {
-      text += delta;
-      if (Date.now() - lastEdit < 1000) {
-        return;
-      }
-      lastEdit = Date.now();
-      edit(chat_id, message_id, text);
-    });
-
-    await stream.finalMessage();
-    await edit(chat_id, message_id, text);
+for await (const update of pollUpdates()) {
+  const chat_id = update.message?.chat.id;
+  const prompt = update.message?.text?.trim();
+  if (chat_id === undefined || !prompt) {
+    continue;
   }
+
+  const placeholder = await tg<{ message_id: number }>('sendMessage', {
+    chat_id,
+    text: '...',
+  });
+  const message_id = placeholder.result!.message_id;
+
+  const stream = client.messages.stream({
+    model,
+    max_tokens: 1024,
+    messages: [{ role: 'user', content: prompt }],
+  });
+
+  let text = '';
+  let lastEdit = 0;
+  // Editing on every token trips the flood limit; batch deltas and edit at most ~1/sec.
+  stream.on('text', (delta) => {
+    text += delta;
+    if (Date.now() - lastEdit < 1000) {
+      return;
+    }
+    lastEdit = Date.now();
+    edit(chat_id, message_id, text);
+  });
+
+  await stream.finalMessage();
+  await edit(chat_id, message_id, text);
 }
