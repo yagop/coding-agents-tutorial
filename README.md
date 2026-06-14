@@ -10,6 +10,7 @@ Published with VitePress at https://yagop.github.io/coding-agents-tutorial/. Eac
 2. [Streaming Responses and Message Types](chapters/02-streaming.md)
 3. [Handling User Requests: REPL and Telegram Bot](chapters/03-repl-telegram.md)
 4. [Context and Conversation Management](chapters/04-context.md)
+5. [Implementing Tools and Function Calling](chapters/05-tools.md)
 
 More chapters are tracked as issues and land here as they are written.
 
