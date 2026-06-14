@@ -56,6 +56,10 @@ export default {
             text: '2. Streaming Responses and Message Types',
             link: '/chapters/02-streaming',
           },
+          {
+            text: '3. Handling User Requests: REPL and Telegram Bot',
+            link: '/chapters/03-repl-telegram',
+          },
         ],
       },
     ],
