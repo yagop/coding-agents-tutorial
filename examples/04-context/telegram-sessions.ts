@@ -6,16 +6,15 @@ const token = process.env.TELEGRAM_BOT_TOKEN;
 if (!token) throw new Error('Set TELEGRAM_BOT_TOKEN in your .env');
 const base = `https://api.telegram.org/bot${token}`;
 const client = new Anthropic();
+const model = process.env.ANTHROPIC_DEFAULT_SONNET_MODEL ?? 'claude-sonnet-4-6';
 type Update = { update_id: number; message?: { chat: { id: number }; text?: string } };
 type Entry = [number, Anthropic.MessageParam[]];
+
 async function tg<T>(method: string, body: object): Promise<{ result?: T }> {
-  const res = await fetch(`${base}/${method}`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(body),
-  });
+  const res = await fetch(`${base}/${method}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
   return res.json() as Promise<{ result?: T }>;
 }
+
 const file = `${import.meta.dir}/sessions.json`;
 const saved: Entry[] = await Bun.file(file).exists() ? await Bun.file(file).json() : [];
 const sessions = new Map<number, Anthropic.MessageParam[]>(saved);
@@ -31,7 +30,7 @@ for (;;) {
     if (chat === undefined || !prompt) continue;
     const history = sessions.get(chat) ?? [];
     history.push({ role: 'user', content: prompt });
-    const reply = await client.messages.create({ model: process.env.ANTHROPIC_DEFAULT_SONNET_MODEL ?? 'claude-sonnet-4-6', max_tokens: 1024, messages: history });
+    const reply = await client.messages.create({ model, max_tokens: 1024, messages: history });
     history.push({ role: 'assistant', content: reply.content });
     sessions.set(chat, history);
     await persist();
