@@ -64,6 +64,10 @@ export default {
             text: '4. Context and Conversation Management',
             link: '/chapters/04-context',
           },
+          {
+            text: '5. Implementing Tools and Function Calling',
+            link: '/chapters/05-tools',
+          },
         ],
       },
     ],
