@@ -60,6 +60,10 @@ export default {
             text: '3. Handling User Requests: REPL and Telegram Bot',
             link: '/chapters/03-repl-telegram',
           },
+          {
+            text: '4. Context and Conversation Management',
+            link: '/chapters/04-context',
+          },
         ],
       },
     ],
