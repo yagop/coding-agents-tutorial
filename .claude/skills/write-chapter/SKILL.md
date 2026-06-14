@@ -79,7 +79,7 @@ Add a comment on the issue linking the PR (`gh issue comment <N> --body ...`, or
 ### 7. Verify
 - Run every example end-to-end - do not just typecheck. Bun auto-loads a `.env` at the repo root for `.ts` files, so after `bun install` (once) run `bun run <file>` for each sample and paste the real output into the PR. Shell samples do not get `.env` auto-loaded - source it first: `set -a; . ./.env; set +a; bash <file>`.
 - `bunx tsc --noEmit` must be clean, and the docs must build so snippet imports resolve: `bun x vitepress@2.0.0-alpha.17 build` (a broken `<<< @/examples/...` path fails the build).
-- Check the chapter is within budget and paste the numbers in the PR: `wc -l chapters/NN-slug.md` (<=150) and `grep -c '^## ' chapters/NN-slug.md` (<=4 main-line H2s plus an optional What's next closer). Spot-check that each sample is <=35 lines with comment:code <=0.30.
+- Check the chapter is within budget and paste the numbers in the PR: `wc -l chapters/NN-slug.md` (<=150) and `grep -c '^## ' chapters/NN-slug.md` (<=4 main-line H2s plus an optional What's next closer). Spot-check that each sample is readable (one statement per line, no golfed one-liners or comma-operator sequencing) and within budget - aim <=35 lines, hard cap 45 (`wc -l`), comment:code <=0.30.
 - Only if no API credentials are available may you skip the live run - say so explicitly in the PR, and never claim the code runs if it was not executed.
 
 ## Special cases (accuracy)
@@ -186,6 +186,7 @@ Find and FIX every instance of:
 - Anything that would fail under bun run (syntax, type, import errors, missing await).
 - Placeholders, TODOs, or incomplete logic.
 - Non-ASCII punctuation.
+- Golfed/compressed code: any line that stacks multiple statements, sequences side effects with the comma operator, or inlines a multi-step expression to save a line. Re-expand to one statement per line (a multi-line \`async function\` over a dense one-line arrow), even if that grows the file - up to the 45-line hard cap. A correct-but-dense one-liner is a defect here, not a pass.
 
 For cutoff-sensitive APIs (extended thinking, citations source schema, fine-tuning), verify the exact shape against current Anthropic docs; if you cannot verify, set ok to false and explain in issues.
 
@@ -233,5 +234,6 @@ Scale the run to the issue: a small chapter is a handful of agents; a large one 
 - Going-deeper asides: secondary material (extra providers, full configs, full taxonomies) goes in a `::: details` block (or a `::: tip`/`::: info` callout), never a main-line H2. The main line must read complete if every aside is collapsed.
 - Visual aids, used sparingly (seasoning, not structure): VitePress callout containers (`::: tip`, `::: info`, `::: warning`, `::: details`) for asides; AT MOST one small ASCII diagram per chapter, and only where a picture genuinely beats a sentence; a small Markdown table when comparing a short list of options (for example env vars or model tiers).
 - Config lives in the repo, not the prose: no `package.json`/`tsconfig.json` JSON dumps in a chapter - one sentence plus the run command, and note the repo already ships the scaffold so a follow-along reader can just run the file.
-- Example code budget: each sample <=35 lines and comment:code ratio <=0.30 (a comment line's first token is `//` or `#`; an end-of-line comment counts as code). The header comment is the run command and nothing else. No numbered `// 1) ... // 2) ...` blocks over `console.log` groups, and no reference tables inside code files.
+- Example code budget: keep each sample small and single-concept - aim for <=35 lines (HARD CAP 45, `wc -l`) with comment:code ratio <=0.30 (a comment line's first token is `//` or `#`; an end-of-line comment counts as code). The header comment is the run command and nothing else. No numbered `// 1) ... // 2) ...` blocks over `console.log` groups, and no reference tables inside code files.
+- Readability outranks the line count - never golf a sample to hit the budget. One statement per line: do NOT join multiple statements with `;` on one line, do NOT use the comma operator to sequence side effects (`(last = now), edit(...)`), and do NOT inline a multi-step expression (for example `(await fetch(...)).json()` with method/headers/body options) purely to save a line. A normal multi-line `async function` helper beats a dense one-line arrow. The standalone-file rule means each Telegram/`fetch` sample re-pastes its own small helper - that boilerplate is exactly why the budget is 45, not 35, for samples that need it. If a sample still cannot fit while staying readable, cut its scope (or, when writing the issue, split it into two samples) - compression is never the answer.
 - Friendliness floor: address the reader as "you" (never "the user" or "one"); the intro and at least one section open with a warm, second-person sentence. Terse is not the same as friendly.
