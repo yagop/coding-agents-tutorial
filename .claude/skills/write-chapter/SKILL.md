@@ -1,13 +1,13 @@
 ---
 name: write-chapter
-description: Write a tutorial chapter (or the README) from its GitHub issue in the coding-agents-tutorial repo. Reads the issue's spec, spawns an ultracode multi-agent Workflow that writes the chapter prose (with VitePress snippet imports) and every code sample and adversarially reviews each file, then pushes a branch and opens a PR that closes the issue. Use when asked to write, draft, or implement a chapter, do chapter N, or fulfill a chapter issue for this repo.
+description: Write a tutorial chapter (or the README) from its GitHub issue in the coding-agents-tutorial repo. Reads the issue's spec, writes the chapter prose (with VitePress snippet imports) and every code sample, reviews each file against the conventions, then pushes a branch and opens a PR that closes the issue. Use when asked to write, draft, or implement a chapter, do chapter N, or fulfill a chapter issue for this repo.
 ---
 
 # Write a tutorial chapter
 
 This skill turns one GitHub issue in `yagop/coding-agents-tutorial` into a branch and a pull request. Every issue maps to one deliverable: a chapter document plus its `examples/NN-slug/` code samples, or the top-level `README.md`.
 
-The writing is done by an **ultracode multi-agent Workflow**, not by a single pass: one agent drafts the document, one agent per code sample implements it, and a second pass adversarially reviews and fixes each file before anything is committed. This keeps generated code honest (no invented SDK surface) and runnable.
+You write everything yourself in a single pass: draft the chapter document, implement each code sample, then re-read every file with fresh, adversarial eyes against the review checklist (Appendix A) and fix what you find before committing. That review pass is what keeps the code honest (no invented SDK surface) and runnable - do not skip it.
 
 ## When to use
 - The user asks to implement, do, or fulfill a specific issue or chapter in this repo (for example: implement issue 5, do chapter 3, write the README from issue 11).
@@ -39,29 +39,16 @@ The issue body is already structured. Parse it into:
 ### 3. Create a branch
 From `main`, create `issue-<N>-<slug>` (for example `issue-5-05-tools`). Use MCP `create_branch` or `git switch -c` in a clone.
 
-### 4. Spawn the ultracode Workflow
-Build the `args` object (below) from steps 1-2, then call the **Workflow** tool with the script in Appendix A. Invoking this skill is the opt-in: always use the Workflow tool here, do not hand-write the chapter yourself.
+### 4. Write the chapter and the samples
+Author every file yourself, following Appendix A (how to write and review) and the Appendix B conventions. Do this directly in the working tree - do not call a Workflow or any other agent tool to generate the chapter.
+- Write the chapter document at `docPath`. Show each sample with a VitePress snippet import (`<<< @/examples/NN-slug/file.ts`) on its own line - import EXACTLY the samples from step 2, in order, and reference no example path that is not one of them. Never paste a sample's full source into a fenced block.
+- Write each sample file under `examples/NN-slug/` as a complete, runnable file - no placeholders, no TODOs.
+- Then run the review checklist in Appendix A over the document and every sample, and fix what it finds, before you commit.
 
-```js
-const args = {
-  issueNumber: 5,
-  slug: '05-tools',
-  branch: 'issue-5-05-tools',
-  docPath: 'chapters/05-tools.md',
-  docSpec: '<the issue Goal + What to cover: teach all of it as runnable prose, within the Appendix B budgets, referencing each sample file by name>',
-  samples: [
-    { path: 'examples/05-tools/define-tool.ts', spec: 'declare a get_weather tool with input_schema and inspect the returned tool_use block' },
-    // ...one entry per Code samples checkbox in the issue
-  ],
-  conventions: '<paste Appendix B verbatim>',
-  context: '<the full issue body, verbatim>',
-}
-```
-
-For the README issue: set `docPath` to `README.md`, `samples` to `[]`, and `docSpec` to the README issue checklist.
+For the README issue (11): the deliverable is just `README.md` (no samples); write it to the README issue checklist.
 
 ### 5. Commit the generated files
-The Workflow returns `{ files: [{ path, content }], flagged: [...] }`. Write each file to its `path` in the local clone. The deliverable is exactly that doc plus the listed sample files - if any stray files exist under `examples/NN-slug/` that are NOT in the returned `files` list (an agent may have written extras), delete them before committing, and confirm the chapter imports only the listed samples. Then wire the new chapter into the published site before committing:
+The deliverable is exactly the chapter doc plus the listed sample files. If any stray files exist under `examples/NN-slug/` that are NOT listed in the issue, delete them before committing, and confirm the chapter imports only the listed samples. Then wire the new chapter into the published site before committing:
 - Add the chapter to `themeConfig.sidebar` in `.vitepress/config.ts`, with `link` pointing at the chapter path without its `.md` extension (for example `/chapters/05-tools`).
 - Link the chapter from the `README.md` table of contents.
 
@@ -71,7 +58,7 @@ Commit everything in one commit on the branch with `git`:
 ### 6. Open the PR
 Create a pull request from the branch into `main`:
 - title: `Implement #<N>: <chapter title>`
-- body: start with `Closes #<N>`, then paste the issue Definition of done as a checklist, then a **Review flags** section listing any `flagged` files the Workflow could not fully verify (empty is good).
+- body: start with `Closes #<N>`, then paste the issue Definition of done as a checklist, then a **Review flags** section listing any file you could not fully verify - for example an SDK shape you could not confirm against the docs (empty is good).
 - MCP `create_pull_request({ owner, repo, head: branch, base: 'main', title, body })`.
 
 Add a comment on the issue linking the PR (`gh issue comment <N> --body ...`, or MCP `add_issue_comment`). Always post this comment.
@@ -83,7 +70,7 @@ Add a comment on the issue linking the PR (`gh issue comment <N> --body ...`, or
 - Only if no API credentials are available may you skip the live run - say so explicitly in the PR, and never claim the code runs if it was not executed.
 
 ## Special cases (accuracy)
-- **Chapter 7 (extended thinking)** and **Chapter 9 (citations source schema, fine-tuning availability)** touch APIs that change. The review agents MUST confirm the exact shapes against current Anthropic docs (use WebFetch/WebSearch if available). If a detail cannot be verified, the sample should degrade gracefully and the file must be listed under Review flags in the PR rather than silently guessed.
+- **Chapter 7 (extended thinking)** and **Chapter 9 (citations source schema, fine-tuning availability)** touch APIs that change. During the review pass you MUST confirm the exact shapes against current Anthropic docs (use WebFetch/WebSearch if available). If a detail cannot be verified, the sample should degrade gracefully and the file must be listed under Review flags in the PR rather than silently guessed.
 
 ## Acceptance criteria for a successful run
 - A branch `issue-<N>-<slug>` exists with one commit containing the doc and every listed sample (no placeholders, no TODOs).
@@ -92,126 +79,33 @@ Add a comment on the issue linking the PR (`gh issue comment <N> --body ...`, or
 
 ---
 
-## Appendix A: the Workflow script
+## Appendix A: how to write and review the files
 
-Pass this as the Workflow `script`, with the `args` from step 4.
+You author the document and every sample yourself, in one pass, then review each file before committing. There is no separate agent - the "review" is you re-reading each file against the checklist below with fresh, adversarial eyes.
 
-```js
-export const meta = {
-  name: 'write-tutorial-chapter',
-  description: 'Write a tutorial doc and its code samples for one GitHub issue, review each file, return files to commit',
-  phases: [
-    { title: 'Doc' },
-    { title: 'Implement' },
-    { title: 'Review' },
-  ],
-}
+### Writing the chapter document
+- Fully satisfy the docSpec (the issue Goal + What to cover) within the Appendix B budgets.
+- Show each sample with a VitePress snippet import on its own line (`<<< @/examples/NN-slug/file.ts`). Import EXACTLY the samples from step 2, in order, and reference no example path that is not one of them. Do NOT paste a sample's full source into a fenced block - inline fenced blocks are only for short illustrative fragments (a line or two).
+- Group the imports under AT MOST 4 main-line H2 sections (never one H2 per sample). Around each import use the snippet sandwich: at most one orienting sentence before, at most two "what to notice" sentences after.
+- One-home rule: the prose must not restate what an inline code comment already says, and must not contradict the code (variable names, prompts, models). Address the reader as "you"; the intro and at least one section open with a warm, second-person sentence.
 
-// The Workflow harness delivers `args` to the script as a JSON STRING, not an
-// object. Parse it before use - otherwise every `A.field` is undefined and the
-// Implement/Review pipeline silently fans out to zero samples (you get only the
-// doc back, with no error).
-const A = typeof args === 'string' ? JSON.parse(args) : (args || {})
+### Writing each sample
+- A complete, runnable Bun TypeScript file - no placeholders, no TODOs - following the Appendix B conventions. Begin each file with the run-command header comment and nothing else.
 
-const FILE = {
-  type: 'object', additionalProperties: false, required: ['path', 'content'],
-  properties: { path: { type: 'string' }, content: { type: 'string' } },
-}
-
-const REVIEW = {
-  type: 'object', additionalProperties: false, required: ['path', 'content', 'ok', 'issues'],
-  properties: {
-    path: { type: 'string' },
-    content: { type: 'string', description: 'Final corrected file content, ready to commit' },
-    ok: { type: 'boolean', description: 'True only if the file meets every acceptance rule after correction' },
-    issues: { type: 'array', items: { type: 'string' }, description: 'Problems found and fixed in content' },
-  },
-}
-
-const CONV = A.conventions
-const CTX = A.context
-
-// Exact, ordered list of sample import lines. Pins the doc agent to the real
-// sample paths so it cannot invent, rename, or omit example filenames.
-const SAMPLE_IMPORTS = (A.samples || [])
-  .map((s) => `- ${s.path} (shows: ${s.spec})\n  import line, VERBATIM on its own line: <<< @/${s.path}`)
-  .join('\n')
-
-phase('Doc')
-const doc = await agent(`Write the deliverable Markdown document for this tutorial issue.
-Target path: ${A.docPath}
-
-It must fully satisfy this spec:
-${A.docSpec}
-
-Reference material (the issue body):
-${CTX}
-
-Conventions you MUST follow:
-${CONV}
-
-Each chapter is published with VitePress. Do NOT paste a sample's full source into a fenced code block. Instead show it with a VitePress snippet import on its own line, so the rendered page always matches the runnable file.
-
-You MUST import EXACTLY these sample files, in this order - and NO others. Use each import line VERBATIM, each on its own line. Do not invent, rename, reorder, or omit any sample filename, and do not reference any example path that is not in this list:
-${SAMPLE_IMPORTS}
-
-You author ONLY the chapter document and return it via the result. You do NOT create, write, or edit any file under examples/ (those files are authored separately) - the only \`<<<\` import lines in the document must be the exact ones listed above.
-
-Group the imports under AT MOST 4 main-line H2 sections - do NOT give each sample its own H2. Around each import use the snippet sandwich: at most one orienting sentence before, at most two "what to notice" sentences after. Use inline fenced blocks only for short illustrative fragments (a line or two), never for a whole sample file, and never paste package.json/tsconfig JSON. The prose must not restate code that the import already shows (one-home rule), and must not contradict it (variable names, prompts, models). Address the reader as "you"; the intro and at least one section must open with a warm, second-person sentence. Keep the whole chapter within 150 lines. You MAY use light visual aids - VitePress callouts (`:::`), a small Markdown table, and at most one small ASCII diagram - plus a few (not many) emoji, all used sparingly per the conventions. Return the path and the complete file content.`,
-  { schema: FILE, label: 'doc:' + A.docPath, phase: 'Doc' })
-
-phase('Implement')
-const samples = A.samples || []
-const reviewed = await pipeline(
-  samples,
-  (s) => agent(`Implement this tutorial code sample as a complete, runnable file.
-Path: ${s.path}
-What it must demonstrate: ${s.spec}
-
-Reference material (the issue body):
-${CTX}
-
-Conventions you MUST follow:
-${CONV}
-
-Return the path and the complete file content. No placeholders, no TODOs.`,
-    { schema: FILE, label: 'impl:' + s.path, phase: 'Implement' }),
-  (file, s) => file ? agent(`Adversarially review this tutorial code sample and return a corrected version.
-Path: ${s.path}
-It must demonstrate: ${s.spec}
-
-Find and FIX every instance of:
+### Review checklist (run over the document and every sample before committing)
+Re-read each file with adversarial eyes and fix every instance of:
 - An Anthropic SDK method or field that does not exist (no invented surface).
-- A violation of the conventions below.
-- Anything that would fail under bun run (syntax, type, import errors, missing await).
+- A violation of the Appendix B conventions.
+- Anything that would fail under `bun run` (syntax, type, import errors, missing await).
 - Placeholders, TODOs, or incomplete logic.
 - Non-ASCII punctuation.
-- Golfed/compressed code: any line that stacks multiple statements, sequences side effects with the comma operator, or inlines a multi-step expression to save a line. Re-expand to one statement per line (a multi-line \`async function\` over a dense one-line arrow), even if that grows the file - up to the 100-line hard cap. A correct-but-dense one-liner is a defect here, not a pass.
+- Golfed/compressed code: any line that stacks multiple statements, sequences side effects with the comma operator, or inlines a multi-step expression to save a line. Re-expand to one statement per line (a multi-line `async function` over a dense one-line arrow), even if that grows the file - up to the 100-line hard cap. A correct-but-dense one-liner is a defect here, not a pass.
 
-For cutoff-sensitive APIs (extended thinking, citations source schema, fine-tuning), verify the exact shape against current Anthropic docs; if you cannot verify, set ok to false and explain in issues.
-
-Conventions:
-${CONV}
-
-File to review:
-${file.content}
-
-Return: path, the FINAL corrected content, ok (true only if fully compliant), and the issues you fixed.`,
-    { schema: REVIEW, label: 'review:' + s.path, phase: 'Review' }) : null
-)
-
-const sampleFiles = reviewed.filter(Boolean).map((r) => ({ path: r.path, content: r.content }))
-const files = (doc ? [doc] : []).concat(sampleFiles)
-const flagged = reviewed.filter(Boolean).filter((r) => !r.ok).map((r) => ({ path: r.path, issues: r.issues }))
-
-return { files: files, flagged: flagged, count: files.length }
-```
-
-Scale the run to the issue: a small chapter is a handful of agents; a large one (chapter 10) fans out one implementer plus one reviewer per sample automatically through the pipeline.
+For cutoff-sensitive APIs (extended thinking, citations source schema, fine-tuning), verify the exact shape against current Anthropic docs; if you cannot verify, list the file under Review flags in the PR rather than guess.
 
 ---
 
-## Appendix B: conventions (paste into args.conventions)
+## Appendix B: conventions (the rules every chapter and sample must follow)
 
 - Runtime is Bun. TypeScript files run directly with `bun run`. No build or transpile step.
 - Use the official `@anthropic-ai/sdk` package. Construct the client with `new Anthropic()` so it reads `ANTHROPIC_API_KEY`, `ANTHROPIC_AUTH_TOKEN`, and `ANTHROPIC_BASE_URL` from the environment. Use only real SDK surface: `client.messages.create`, `client.messages.stream`, content blocks (`text`, `tool_use`, `tool_result`, `thinking`), and fields like `stop_reason`, `usage`, `system`, `tools`, `input_schema`, `tool_choice`, `cache_control`, plus error classes (`Anthropic.APIError`, `RateLimitError`). Do not invent methods.
