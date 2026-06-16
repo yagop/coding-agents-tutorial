@@ -27,8 +27,19 @@ Notice that you find the call by narrowing `response.content` to the block whose
 Catching the call is half the round-trip; now you close it. The flow is a fixed five-step dance, and it is worth holding the whole shape in your head before you read the code:
 
 ```text
-create(tools) -> stop_reason 'tool_use' -> run the tool locally
-       -> create again with a tool_result -> final text answer
+create() with tools
+      |
+      v
+stop_reason: 'tool_use'
+      |
+      v
+run the tool locally
+      |
+      v
+create() with the tool_result
+      |
+      v
+final text answer
 ```
 
 When `stop_reason === 'tool_use'`, you append the assistant's content **verbatim** as an assistant turn, run the tool yourself, then send a new `user` turn whose `content` is a `tool_result` block - an `Anthropic.ToolResultBlockParam` that echoes the `tool_use_id` exactly. That echo is the rule that binds request to answer: every `tool_use` block in a turn needs a matching `tool_result`, or the next `create` call rejects the array.
