@@ -11,6 +11,7 @@ Published with VitePress at https://yagop.github.io/coding-agents-tutorial/. Eac
 3. [Handling User Requests: REPL and Telegram Bot](chapters/03-repl-telegram.md)
 4. [Context and Conversation Management](chapters/04-context.md)
 5. [Implementing Tools and Function Calling](chapters/05-tools.md)
+6. [Building Tool Chains and Complex Workflows](chapters/06-tool-chains.md)
 
 More chapters are tracked as issues and land here as they are written.
 
