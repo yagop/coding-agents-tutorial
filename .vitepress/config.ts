@@ -68,6 +68,10 @@ export default {
             text: '5. Implementing Tools and Function Calling',
             link: '/chapters/05-tools',
           },
+          {
+            text: '6. Building Tool Chains and Complex Workflows',
+            link: '/chapters/06-tool-chains',
+          },
         ],
       },
     ],
