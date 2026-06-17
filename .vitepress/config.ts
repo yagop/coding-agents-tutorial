@@ -72,6 +72,10 @@ export default {
             text: '6. Building Tool Chains and Complex Workflows',
             link: '/chapters/06-tool-chains',
           },
+          {
+            text: '7. Advanced Agent Patterns',
+            link: '/chapters/07-advanced-patterns',
+          },
         ],
       },
     ],
