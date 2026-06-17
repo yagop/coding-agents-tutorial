@@ -4,7 +4,8 @@
 
 ```text
   read input -> build messages -> call Claude -> emit output -> repeat
-                                                     |
+                                          |
+                                          v
                                           stop_reason 'end_turn'
                                           ends the turn
 ```
