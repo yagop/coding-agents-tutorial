@@ -6,18 +6,18 @@ Everything in this chapter is a single round trip: you send a JSON body, you get
 
 ```text
    your code
-      |
-      v
-  +-------------------------------------------------+
-  |  REQUEST   POST /v1/messages                    |
-  |    model, max_tokens, messages, system?         |
-  +-------------------------------------------------+
-      |
-      v
-  +-------------------------------------------------+
-  |  RESPONSE  Message                              |
-  |    content[], stop_reason, usage                |
-  +-------------------------------------------------+
+      │
+      ▼
+  ┌─────────────────────────────────────────────────┐
+  │  REQUEST   POST /v1/messages                    │
+  │    model, max_tokens, messages, system?         │
+  └─────────────────────────────────────────────────┘
+      │
+      ▼
+  ┌─────────────────────────────────────────────────┐
+  │  RESPONSE  Message                              │
+  │    content[], stop_reason, usage                │
+  └─────────────────────────────────────────────────┘
 ```
 
 Prerequisites: Bun installed and your API credentials in a `.env` file at the project root (the next section explains which variables). No earlier chapters required.

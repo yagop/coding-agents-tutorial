@@ -3,11 +3,10 @@
 💬 So far each script asked Claude one fixed question and exited. Now you'll hand the keyboard to a real person. A coding agent is, at heart, a loop: read input, build messages, call Claude, emit output, repeat. The Claude call stays the same; only the I/O around it changes - so in this chapter you wrap that one call in two different frontends, a terminal REPL and a Telegram bot.
 
 ```text
-  read input -> build messages -> call Claude -> emit output -> repeat
-                                          |
-                                          v
-                                          stop_reason 'end_turn'
-                                          ends the turn
+  read input → build messages → call Claude → emit output → repeat
+                                │
+                                ▼
+                                stop_reason 'end_turn' ends the turn
 ```
 
 You already have `new Anthropic()`, the env vars, and the content-array narrowing from Chapter 1, plus `stream()`, `.on('text')`, and `finalMessage()` from Chapter 2. Here you only add the input/output plumbing. The one new env var is `TELEGRAM_BOT_TOKEN`, which lives in `.env` next to your Anthropic credentials - Bun auto-loads it, and as always the key comes from the environment; never hardcode it.

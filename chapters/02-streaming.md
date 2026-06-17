@@ -28,20 +28,20 @@ The streaming and blocking paths converge on one shape: a fully typed `Anthropic
 
 ```text
   message_start          usage.input_tokens
-      |
-      v
+      │
+      ▼
   content_block_start    index, type (e.g. text)
-      |
-      v
+      │
+      ▼
   content_block_delta    text_delta / input_json_delta   (repeats)
-      |
-      v
+      │
+      ▼
   content_block_stop     index
-      |
-      v
+      │
+      ▼
   message_delta          stop_reason + usage.output_tokens
-      |
-      v
+      │
+      ▼
   message_stop
 ```
 
