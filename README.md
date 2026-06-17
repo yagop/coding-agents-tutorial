@@ -13,6 +13,7 @@ Published with VitePress at https://yagop.github.io/coding-agents-tutorial/. Eac
 5. [Implementing Tools and Function Calling](chapters/05-tools.md)
 6. [Building Tool Chains and Complex Workflows](chapters/06-tool-chains.md)
 7. [Advanced Agent Patterns](chapters/07-advanced-patterns.md)
+8. [Production and Deployment](chapters/08-production.md)
 
 More chapters are tracked as issues and land here as they are written.
 

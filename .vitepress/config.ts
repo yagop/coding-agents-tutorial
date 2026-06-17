@@ -76,6 +76,10 @@ export default {
             text: '7. Advanced Agent Patterns',
             link: '/chapters/07-advanced-patterns',
           },
+          {
+            text: '8. Production and Deployment',
+            link: '/chapters/08-production',
+          },
         ],
       },
     ],
